@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishFortress - Phishing Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Logo Section -->
+        <div class="logo">
+            <img src="{{ url_for('static', filename='phishfortress_logo.png') }}" alt="PhishFortress Logo">
+        </div>
+        
+        <!-- Welcome Message -->
+        <h1>Welcome to PhishFortress</h1>
+        <p>Increasing security structure one program at a time..</p>
+        
+        <!-- Email Input Form -->
+        <form method="POST" action="/classify">
+            <label for="email_text">Paste the email content you want to check:</label><br>
+            <textarea id="email_text" name="email_text" rows="10" cols="50" placeholder="Enter the email content here..."></textarea><br><br>
+            <button type="submit">Check Email</button>
+        </form>
+
+        <!-- Classification Result -->
+        {% if classification %}
+        <h2>Classification Result: {{ classification }}</h2>
+        {% endif %}
+    </div>
+</body>
+</html>

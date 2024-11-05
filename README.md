@@ -1,1 +1,1 @@
-"" 
+"pip install pandas scikit-learn joblib matplotlib seaborn beautifulsoup4 nltk cryptography flask" will install all the necessary libraries for the project. Just use it in terminal no need for a virtual environment anymore. 

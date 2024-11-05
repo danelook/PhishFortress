@@ -1,81 +1,73 @@
-import os
 import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, confusion_matrix
+import joblib
+import os
 import matplotlib.pyplot as plt
 import seaborn as sns
-import joblib
 
-print("Script has started running...")
+# Load all three datasets
+df1 = pd.read_csv(r'C:\Users\novem\phishfortress\data\emails1.csv')
+df2 = pd.read_csv(r'C:\Users\novem\phishfortress\data\emails2.csv')
+df3 = pd.read_csv(r'C:\Users\novem\phishfortress\data\emails3.csv')
 
-# Load and preprocess the dataset
-csv_path = '../data/emails.csv'
+# Combine the datasets into one DataFrame
+df = pd.concat([df1, df2, df3], ignore_index=True)
 
-# Check if the file exists
-if not os.path.exists(csv_path):
-    print(f"Error: The file {csv_path} does not exist.")
-    exit()
+# Check that required columns exist and drop rows with missing values in 'subject' or 'body'
+if 'subject' in df.columns and 'body' in df.columns and 'label' in df.columns:
+    df.dropna(subset=['subject', 'body', 'label'], inplace=True)
+else:
+    print("Required columns 'subject', 'body', and/or 'label' not found!")
 
-# Load the dataset
-df = pd.read_csv(csv_path)
+# Combine the 'subject' and 'body' fields into a single text feature for analysis
+df['email_text'] = df['subject'] + ' ' + df['body']
 
-print("Dataset loaded successfully!")
-print(f"Dataset shape: {df.shape}")  # Print dataset shape
+# Optional: drop the columns that are not necessary for the model (you can keep any of these if needed)
+df = df.drop(columns=['subject', 'body', 'sender', 'receiver', 'date', 'urls'])
 
-print("Preprocessing data...")
+# Splitting the dataset into training and testing sets
+X = df['email_text']
+y = df['label']
 
-# Remove NaN values from 'Email Text' and 'Email Type'
-df.dropna(subset=['Email Text', 'Email Type'], inplace=True)
-
-# Remove rows with empty strings in 'Email Text'
-df = df[df['Email Text'].str.strip() != '']
-
-# Preprocess the data (email body and labels)
-X = df['Email Text']  # Email text
-y = df['Email Type'].apply(lambda x: 1 if x == 'Phishing Email' else 0)  # Labels (1 for phishing, 0 for legitimate)
-
-# Convert the email text to numerical features using TF-IDF
-vectorizer = TfidfVectorizer()
-X = vectorizer.fit_transform(X)
-
-print("Data preprocessing completed!")
-
-print("Splitting the data...")
-
-# Split the dataset into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-print("Training the model...")
+# Vectorize the email text using TF-IDF
+vectorizer = TfidfVectorizer(stop_words='english', max_features=5000)
+X_train_tfidf = vectorizer.fit_transform(X_train)
+X_test_tfidf = vectorizer.transform(X_test)
 
-# Train a logistic regression model
+# Training a basic Logistic Regression model
 model = LogisticRegression()
-model.fit(X_train, y_train)
-
-print("Model training completed!")
-
-print("Evaluating the model...")
+model.fit(X_train_tfidf, y_train)
 
 # Make predictions on the test set
-y_pred = model.predict(X_test)
+y_pred = model.predict(X_test_tfidf)
 
-# Print classification report
+# Evaluate the model
 print(classification_report(y_test, y_pred))
 
-# Calculate confusion matrix
+# Create a folder for models if it doesn't exist
+model_dir = r'C:\Users\novem\phishfortress\models'
+os.makedirs(model_dir, exist_ok=True)
+
+# Overwrite the models and save them under the new names
+joblib.dump(model, os.path.join(model_dir, 'phishing_model.pkl'))
+joblib.dump(vectorizer, os.path.join(model_dir, 'vectorizer.pkl'))
+
+# Plot confusion matrix
 conf_matrix = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(8, 6))
 
-# Plot confusion matrix using seaborn for better visuals
-plt.figure(figsize=(6, 4))
-sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=['Legitimate', 'Phishing'], yticklabels=['Legitimate', 'Phishing'])
-plt.ylabel('True Label')
+# Create the heatmap with Seaborn
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=['Legit', 'Phish'], yticklabels=['Legit', 'Phish'])
+
+# Add labels and titles
+plt.title('Confusion Matrix of Combined Phish Detection Model')
 plt.xlabel('Predicted Label')
-plt.title('Confusion Matrix')
-plt.show()
+plt.ylabel('True Label')
 
-# Save the trained model and vectorizer
-print("Saving model and vectorizer...")
-joblib.dump(model, '../models/phishing_model.pkl')
-joblib.dump(vectorizer, '../models/vectorizer.pkl')
-print("Model and vectorizer saved successfully!")
+# Display the plot
+plt.show()

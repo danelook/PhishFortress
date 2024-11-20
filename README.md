@@ -1,1 +1,1 @@
-"phishfort" 
+To install required libraries for PhishFortress, input "pip install flask pandas scikit-learn joblib beautifulsoup4 nltk cryptography" into command prompt. If a library fails to install or gives an error, use the built in command prompt in VS Code and reenter the library that failed, this should fix the issue.

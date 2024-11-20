@@ -1,1 +1,0 @@
-Put .csv files in this folder; I named mine email1.csv email2.csv email3.csv. Running the train_model.py script after implementing data files will give you an error, copy and paste the first couple lines of the .csv file into chat and have it fix the formatting of train_model.py. From there it will update the .pkl files (AI)
